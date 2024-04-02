@@ -102,17 +102,6 @@
     const i = pixel.dataset.i; // Set row index as a data attribute
     const j = pixel.dataset.j; // Set column index as a data attribute
     const color = colorPicker.value;
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'YOUR_API_GATEWAY_ENDPOINT', true); // Replace with your API Gateway endpoint
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-        } else {
-            alert('Failed to submit data!');
-        }
-    };
-    xhr.send(JSON.stringify({i,j, color}));
-
     pixel.style.backgroundColor = color;
   }
 
@@ -153,10 +142,6 @@
     }
     return null;
   }
-    // Add event listener to the button for navigation
-    document.getElementById('goToAnotherPageButton').addEventListener('click', () => {
-    window.location.href = 'place.php'; // Replace 'anotherpage.html' with the path to your another page
-  });
 </script>
 </body>
 </html>
