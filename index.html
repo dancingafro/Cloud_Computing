@@ -32,10 +32,8 @@
 <body>
 <div class="container" id="container"></div>
 <div class="colorPickerContainer">
-    
     <div id="timer">00:00</div>
     <input type="color" id="colorPicker" value="#ffffff">
-    <button id="goToAnotherPageButton">Go to Another Page</button> <!-- Button added -->
 </div>
 
 <script>
@@ -57,21 +55,11 @@
     }
     return color;
   }
-    function randomColor(pixel)
-    {
-    const color = getRandomColor();
-    pixel.style.backgroundColor = color;
-    }
-    
-  // Start the timer
-    setInterval(() => {
-    for (let i = 0; i < 150; i++) {
-    for (let j = 0; j < 90; j++) {
-        //todo: get server data
-        // randomColor(pixels[i][j]);
-    }
+  function randomColor(pixel)
+  {
+  const color = getRandomColor();
+  pixel.style.backgroundColor = color;
   }
-  }, 10); // Update every 5 seconds
 
   // Save selected color to cookie when it changes
   colorPicker.addEventListener('change', () => {
@@ -84,8 +72,7 @@
     for (let j = 0; j < 90; j++) {
       const pixel = document.createElement('div');
       pixel.classList.add('pixel');
-      pixel.dataset.i = i; // Set row index as a data attribute
-      pixel.dataset.j = j; // Set column index as a data attribute
+      pixel.id = `${i}-${j}`;
       pixel.addEventListener('click', () => {
        // if(seconds != 0) return;
         seconds = 60
@@ -99,19 +86,28 @@
 
   // Function to change color of pixel
   function changeColor(pixel) {
-    const i = pixel.dataset.i; // Set row index as a data attribute
-    const j = pixel.dataset.j; // Set column index as a data attribute
     const color = colorPicker.value;
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'YOUR_API_GATEWAY_ENDPOINT', true); // Replace with your API Gateway endpoint
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-        } else {
-            alert('Failed to submit data!');
-        }
-    };
-    xhr.send(JSON.stringify({i,j, color}));
+    var formData = new FormData();
+
+    // Append data to the FormData object
+    formData.append('key', pixel.id);
+    formData.append('color', color);
+
+    // Send the FormData object via fetch() POST request
+    fetch('submit_form.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (response.ok) {
+        console.log('Form data submitted successfully');
+      } else {
+        console.error('Error submitting form data');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
 
     pixel.style.backgroundColor = color;
   }
@@ -153,10 +149,21 @@
     }
     return null;
   }
-    // Add event listener to the button for navigation
-    document.getElementById('goToAnotherPageButton').addEventListener('click', () => {
-    window.location.href = 'place.php'; // Replace 'anotherpage.html' with the path to your another page
-  });
+  
+  function GetFromServer()
+  {
+    fetch('Pixels.php',{method: 'GET'})
+    .then(response => response.json())
+    .then(data => {
+      let pixel = document.getElementById(data.key);
+      pixel.style.backgroundColor = data.color;
+    })
+    .catch(error => console.error('Error:', error));
+  }
+
+  // Start the timer
+  setInterval(GetFromServer, 100); // Update every N mili-seconds
+
 </script>
 </body>
 </html>
