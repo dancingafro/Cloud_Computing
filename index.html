@@ -40,8 +40,24 @@
       <span id="sliderValue">1</span>
     </div>
 </div>
-
+<script src="socket.io.js"></script>
 <script>
+    const socket = io('localhost:3000');
+
+  socket.on('connect', () => {
+    console.log('Connected to the server');
+  });
+
+
+  window.addEventListener('beforeunload', function (e) {
+    // Send a message to the server indicating the client is disconnecting
+    // Note: The disconnect event is automatically handled by Socket.IO,
+    // but you can send additional messages here if needed.
+    socket.disconnect();
+  });
+
+
+
   const container = document.getElementById('container');
   const pixels = [];
   const colorPicker = document.getElementById('colorPicker');   
