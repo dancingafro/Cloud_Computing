@@ -3,7 +3,6 @@
 /* Connect to MySQL and select the database. */
 $connection = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD);
 if (mysqli_connect_errno()) echo "Failed to connect to MySQL: " . mysqli_connect_error();
-VerifyTable($connection, DB_DATABASE);
 $database = mysqli_select_db($connection, DB_DATABASE);
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $data = json_decode(file_get_contents('php://input'));
@@ -56,30 +55,5 @@ else if ($_SERVER["REQUEST_METHOD"] == "GET")
 else 
 {
     echo "Error: This script only accepts POST or GET requests.";
-}
-?>
-
-<?php
-/* Check whether the table exists and, if not, create it. */
-function VerifyTable($connection, $dbName) 
-{
-    if(!TableExists("PIXELS", $connection, $dbName))
-    {
-        // might need to change this might not work with aws
-        $query = "CREATE TABLE `$dbName`.`pixels` (`PIXEL_KEY` VARCHAR(255) NOT NULL , `COLOR` VARCHAR(255) NOT NULL)";
-        if(!mysqli_query($connection, $query)) echo("<p>Error creating table.</p>");
-    }
-}
-
-function TableExists($tableName, $connection, $dbName) 
-{
-    $t = mysqli_real_escape_string($connection, $tableName);
-    $d = mysqli_real_escape_string($connection, $dbName);
-
-    $checktable = mysqli_query($connection, "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = '$t' AND TABLE_SCHEMA = '$d'");
-
-    if(mysqli_num_rows($checktable) > 0) return true;
-
-    return false;
 }
 ?>
