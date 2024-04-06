@@ -7,7 +7,6 @@
 <style>
   .container {
     position: absolute; /* Position the container absolutely */
-    left: 65px; /* Adjust the left position based on the width of the color picker container */
     top: 10px; /* Adjust top position as needed */
     display: grid;
     grid-template-columns: repeat(150, 10px); /* Adjust grid size as needed */
@@ -22,30 +21,56 @@
     border: 1px solid #000; /* Add a 1px solid black border */
   }
   
-  .colorPickerContainer {
+  .pallet {
     position: fixed;
     top: 10px; /* Adjust top position as needed */
-    left: 10px; /* Adjust left position as needed */
+    left: 1520px; /* Adjust left position as needed */
   }
 </style>
 </head>
 <body>
-<div class="container" id="container"></div>
-<div class="colorPickerContainer">
-    <div id="timer">00:00</div>
-    <input type="color" id="colorPicker" value="#ffffff">
+<div class="container" id="container">
+<div class="pallet">
+    <div class="colorPickerContainer">
+      <input type="color" id="colorPicker" value="#ffffff">
+      <button id="randomColor">Random Color</button>
+    </div>
+    <div class="floatSliderContainer">
+      <input type="range" id="brushRadius" name="brushRadius" min="0" max="20" step="0.1" value="0">
+      <span id="sliderValue">1</span>
+    </div>
 </div>
 
 <script>
   const container = document.getElementById('container');
   const pixels = [];
   const colorPicker = document.getElementById('colorPicker');   
-  const savedColor = getCookie('selectedColor');
+  const palletData = getCookie('pallet');
+  const brushRadius = document.getElementById('brushRadius');
+  const sliderValue = document.getElementById('sliderValue');
   let seconds = 0;
-  let timerInterval;
-  if (savedColor) {
-    colorPicker.value = savedColor;
+
+// Check if the cookie was found and has data
+if (palletData) {
+  // If there's a saved color, update the colorPicker's value
+  if (palletData.selectedColor) {
+    colorPicker.value = palletData.selectedColor;
   }
+  
+  // If there's a saved brush radius, update the brushRadius control and its display value
+  if (palletData.brushRadius) {
+    brushRadius.value = palletData.brushRadius; // Assuming brushRadius is your input element for radius
+    sliderValue.textContent = palletData.brushRadius; // Update display of the brush radius value
+  }
+}
+
+  brushRadius.oninput = function() {
+    updatePalletCookie();
+    sliderValue.textContent = this.value;
+  }
+  document.getElementById('randomColor').onclick = function() {
+    randomColor();
+  };
   // Function to generate random color
   function getRandomColor() {
     const letters = '0123456789ABCDEF';
@@ -55,46 +80,63 @@
     }
     return color;
   }
-  function randomColor(pixel)
+  
+  function randomColor()
   {
-  const color = getRandomColor();
-  pixel.style.backgroundColor = color;
+    const color = getRandomColor();
+    colorPicker.value = color;
   }
-
+  
   // Save selected color to cookie when it changes
   colorPicker.addEventListener('change', () => {
-    setCookie('selectedColor', colorPicker.value, 30); // Cookie expires in 30 days
+    updatePalletCookie(); // Cookie expires in 30 days
+    console.log('colorPicker value:', colorPicker.value);
   });
-
+  
   // Initialize grid
-  for (let i = 0; i < 150; i++) {
-    pixels[i] = [];
-    for (let j = 0; j < 90; j++) {
+  for (let i = 0; i < 90; i++) {
+    for (let j = 0; j < 150; j++) {
       const pixel = document.createElement('div');
       pixel.classList.add('pixel');
       pixel.id = `${i}-${j}`;
       pixel.addEventListener('click', () => {
-       // if(seconds != 0) return;
         seconds = 60
-        timerInterval = setInterval(updateTimer, 1000);
-        changeColor(pixel);
+        const radius = parseFloat(brushRadius.value, 0);
+        let submittedPixels = [];
+        // Loop to change color of pixels within the radius
+        for (let x = Math.floor(-radius); x <= Math.ceil(radius); ++x) {
+          for (let y = Math.floor(-radius); y <= Math.ceil(radius); ++y) {
+            // Calculate coordinates of the target pixel
+            let targetI = i + x;
+            let targetJ = j + y;
+            // Ensure target is within bounds and radius
+            if (targetI >= 0 && targetI < 90 && targetJ >= 0 && targetJ < 150 && Math.sqrt(x * x + y * y) <= radius) {
+              let targetPixelId = `${targetI}-${targetJ}`;
+              let targetPixel = document.getElementById(targetPixelId);
+              if (targetPixel) {
+                changeColor(targetPixel); // Assuming this function correctly changes the color of a pixel
+                submittedPixels.push({key: targetPixelId,color:colorPicker.value});
+              }
+            }
+          }
+        }
       });
       container.appendChild(pixel);
-      pixels[i][j] = pixel;
+      pixels.push(pixel); // Using push to add the element at the end of the array
     }
   }
-
+  
   // Function to change color of pixel
   function changeColor(pixel) {
     const color = colorPicker.value;
     var formData = new FormData();
-
+    
     // Append data to the FormData object
     formData.append('key', pixel.id);
     formData.append('color', color);
-
+    
     // Send the FormData object via fetch() POST request
-    fetch('submit_form.php', {
+    fetch('Pixels.php', {
       method: 'POST',
       body: formData
     })
@@ -108,62 +150,76 @@
     .catch(error => {
       console.error('Error:', error);
     });
-
+    
     pixel.style.backgroundColor = color;
   }
+  
+  function updatePalletCookie()
+  {
+    let palletData = {
+      selectedColor: colorPicker.value,
+      brushRadius: brushRadius.value
+    };
 
-  function updateTimer() {
-    if (seconds === 0) {
-      clearInterval(timerInterval);
-      return;
-    }
-    --seconds;
-    document.getElementById('timer').innerText = formatTime(Math.floor(seconds/60)) + ":" + formatTime(Math.floor(seconds%60));
+    // Set the cookie with the name 'pallet', storing the palletData object, to expire in 30 days
+    setCookie('pallet', palletData, 30);
   }
-
-  function formatTime(time) {
-    return time < 10 ? "0" + time : time;
-  }
-
+  
   // Function to set a cookie
-  function setCookie(name, value, days) {
+  function setCookie(name, arrayValue, days) 
+  {
     const date = new Date();
     date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
     const expires = "expires=" + date.toUTCString();
-    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    
+    // Convert the array to a JSON string
+    const value = JSON.stringify(arrayValue);
+    
+    // Encode the value to ensure it doesn't break the cookie format
+    const encodedValue = encodeURIComponent(value);
+    
+    document.cookie = name + "=" + encodedValue + ";" + expires + ";path=/";
   }
-
+  
+  
   // Function to get a cookie
-  function getCookie(name) {
-    const cookieName = name + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(';');
-    for (let i = 0; i < cookieArray.length; i++) {
-      let cookie = cookieArray[i];
-      while (cookie.charAt(0) == ' ') {
-        cookie = cookie.substring(1);
-      }
-      if (cookie.indexOf(cookieName) == 0) {
-        return cookie.substring(cookieName.length, cookie.length);
+  function getCookie(name) 
+  {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i=0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') c = c.substring(1);
+      if (c.indexOf(nameEQ) == 0) {
+        const value = c.substring(nameEQ.length, c.length);
+        
+        // Decode the value and parse it as JSON
+        return JSON.parse(decodeURIComponent(value));
       }
     }
     return null;
   }
+
   
   function GetFromServer()
   {
     fetch('Pixels.php',{method: 'GET'})
     .then(response => response.json())
     .then(data => {
-      let pixel = document.getElementById(data.key);
-      pixel.style.backgroundColor = data.color;
+	    data.forEach(pixelData => {
+        let pixel = document.getElementById(pixelData.PIXEL_KEY);
+        pixel.style.backgroundColor = pixelData.COLOR;
+	    });
     })
     .catch(error => console.error('Error:', error));
   }
 
   // Start the timer
-  setInterval(GetFromServer, 100); // Update every N mili-seconds
-
+  let updateInterval=setInterval(GetFromServer, 100); // Update every N mili-seconds
+  // Clear the interval on page refresh or close
+  window.addEventListener('beforeunload', function() {
+    clearInterval(updateFromServer);
+  });
 </script>
 </body>
 </html>
