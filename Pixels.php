@@ -3,32 +3,40 @@
 /* Connect to MySQL and select the database. */
 $connection = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD);
 if (mysqli_connect_errno()) echo "Failed to connect to MySQL: " . mysqli_connect_error();
+VerifyTable($connection, DB_DATABASE);
 $database = mysqli_select_db($connection, DB_DATABASE);
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Check if the 'name' and 'email' fields are set
-    if (isset($_POST["key"]) && isset($_POST["color"])) {
-        // Retrieve the data sent from the form
-        $key = $_POST["key"];
-        $color = $_POST["color"];
-            
-        $checkQuery = "SELECT * FROM PIXELS WHERE PIXEL_KEY = '$key'";
-        $checkResult = mysqli_query($connection, $checkQuery);
+    $data = json_decode(file_get_contents('php://input'));
 
-        if (mysqli_num_rows($checkResult) > 0) {
-            // If a record exists, update it
-            $updateQuery = "UPDATE PIXELS SET COLOR = '$color' WHERE PIXEL_KEY = '$key'";
-            mysqli_query($connection, $updateQuery);
-            echo "Record updated successfully";
-        } else {
-            // If no record exists, insert a new one
-            $insertQuery = "INSERT INTO PIXELS (PIXEL_KEY, COLOR) VALUES ('$key', '$color')";
-            mysqli_query($connection, $insertQuery);
-            echo "New record inserted successfully";
+    // Check if data is an array
+    if (is_array($data)) {
+        foreach ($data as $item) {
+            // Check if both 'key' and 'color' are set for this item
+            if (isset($item->key) && isset($item->color)) {
+                $key = mysqli_real_escape_string($connection, $item->key);
+                $color = mysqli_real_escape_string($connection, $item->color);
+                
+                // Prepare the check query
+                $checkQuery = "SELECT * FROM PIXELS WHERE PIXEL_KEY = '$key'";
+                $checkResult = mysqli_query($connection, $checkQuery);
+                
+                if (mysqli_num_rows($checkResult) > 0) {
+                    // If a record exists, update it
+                    $updateQuery = "UPDATE PIXELS SET COLOR = '$color' WHERE PIXEL_KEY = '$key'";
+                    mysqli_query($connection, $updateQuery);
+                    echo "Record with key $key updated successfully. ";
+                } else {
+                    // If no record exists, insert a new one
+                    $insertQuery = "INSERT INTO PIXELS (PIXEL_KEY, COLOR) VALUES ('$key', '$color')";
+                    mysqli_query($connection, $insertQuery);
+                    echo "New record with key $key inserted successfully. ";
+                }
+            } else {
+                echo "Missing key or color for some items. ";
+            }
         }
-        
-        // You can perform further processing here, such as saving the data to a database
     } else {
-        echo "Error: 'name' and 'email' fields are required.";
+        echo "Invalid data format. ";
     }
 } 
 else if ($_SERVER["REQUEST_METHOD"] == "GET") 
@@ -48,5 +56,30 @@ else if ($_SERVER["REQUEST_METHOD"] == "GET")
 else 
 {
     echo "Error: This script only accepts POST or GET requests.";
+}
+?>
+
+<?php
+/* Check whether the table exists and, if not, create it. */
+function VerifyTable($connection, $dbName) 
+{
+    if(!TableExists("PIXELS", $connection, $dbName))
+    {
+        // might need to change this might not work with aws
+        $query = "CREATE TABLE `$dbName`.`pixels` (`PIXEL_KEY` VARCHAR(255) NOT NULL , `COLOR` VARCHAR(255) NOT NULL)";
+        if(!mysqli_query($connection, $query)) echo("<p>Error creating table.</p>");
+    }
+}
+
+function TableExists($tableName, $connection, $dbName) 
+{
+    $t = mysqli_real_escape_string($connection, $tableName);
+    $d = mysqli_real_escape_string($connection, $dbName);
+
+    $checktable = mysqli_query($connection, "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = '$t' AND TABLE_SCHEMA = '$d'");
+
+    if(mysqli_num_rows($checktable) > 0) return true;
+
+    return false;
 }
 ?>

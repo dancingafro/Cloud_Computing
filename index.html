@@ -36,7 +36,7 @@
       <button id="randomColor">Random Color</button>
     </div>
     <div class="floatSliderContainer">
-      <input type="range" id="brushRadius" name="brushRadius" min="0" max="20" step="0.1" value="0">
+      <input type="range" id="brushRadius" name="brushRadius" min="0" max="10" step="0.1" value="0">
       <span id="sliderValue">1</span>
     </div>
 </div>
@@ -103,6 +103,7 @@ if (palletData) {
         seconds = 60
         const radius = parseFloat(brushRadius.value, 0);
         let submittedPixels = [];
+        const color =colorPicker.value;
         // Loop to change color of pixels within the radius
         for (let x = Math.floor(-radius); x <= Math.ceil(radius); ++x) {
           for (let y = Math.floor(-radius); y <= Math.ceil(radius); ++y) {
@@ -115,11 +116,25 @@ if (palletData) {
               let targetPixel = document.getElementById(targetPixelId);
               if (targetPixel) {
                 changeColor(targetPixel); // Assuming this function correctly changes the color of a pixel
-                submittedPixels.push({key: targetPixelId,color:colorPicker.value});
+                submittedPixels.push({key: targetPixelId,color:color});
               }
             }
           }
         }
+        var formData = new FormData();
+        // Send the FormData object via fetch() POST request
+        fetch('Pixels.php', {
+          method: 'POST',
+          body: JSON.stringify(submittedPixels),
+        })
+        .then(response => {
+          if (!response.ok) {
+            console.error('Error submitting form data');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
       });
       container.appendChild(pixel);
       pixels.push(pixel); // Using push to add the element at the end of the array
@@ -129,28 +144,6 @@ if (palletData) {
   // Function to change color of pixel
   function changeColor(pixel) {
     const color = colorPicker.value;
-    var formData = new FormData();
-    
-    // Append data to the FormData object
-    formData.append('key', pixel.id);
-    formData.append('color', color);
-    
-    // Send the FormData object via fetch() POST request
-    fetch('Pixels.php', {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => {
-      if (response.ok) {
-        console.log('Form data submitted successfully');
-      } else {
-        console.error('Error submitting form data');
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-    });
-    
     pixel.style.backgroundColor = color;
   }
   
@@ -215,11 +208,7 @@ if (palletData) {
   }
 
   // Start the timer
-  let updateInterval=setInterval(GetFromServer, 100); // Update every N mili-seconds
-  // Clear the interval on page refresh or close
-  window.addEventListener('beforeunload', function() {
-    clearInterval(updateFromServer);
-  });
+  setInterval(GetFromServer, 100); // Update every N mili-seconds
 </script>
 </body>
 </html>
