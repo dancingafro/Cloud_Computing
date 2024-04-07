@@ -39,13 +39,13 @@ db.connect(err => {
   console.log('Connected to the database.');
 });
 
-db.query('SELECT COUNT(*) AS count FROM pixels', async (error, results, fields) => {
+db.query('SELECT COUNT(*) AS count FROM pixels',  (error, results, fields) => {
     if (error) throw error;
     console.log('Number of rows:', results[0].count);
     if(results[0].count == 0)
     {
         console.log('Database empty. Initializing the database with default values');
-        await initDatabase();
+        initDatabase();
     }
     else{
         console.log('Database already has data, no initialization needed.');
