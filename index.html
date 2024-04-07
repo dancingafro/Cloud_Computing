@@ -63,6 +63,7 @@
   });
 
   socket.on('refresh_pixels', (data) => {
+    console.log('refresh pixels');
   try {
     data.forEach(pixelData => {
       const elementId = pixelData.x + '-' + pixelData.y;
@@ -79,21 +80,22 @@
 });
 
   socket.on('refresh_userlist', (data) => {
+    console.log('refresh_userlist');
+    var tableBody = document.querySelector("#usertable tbody");
+    tableBody.innerHTML = '';
     try {
       data.forEach(userData => {
-        var tableBody = document.querySelector("#users tbody");
         var newRow = document.createElement('tr');
-
         var idCell = document.createElement('td');
         var usernameCell = document.createElement('td');
-        idCell.textContent = userData.id;
+        idCell.textContent = userData.socket_id;
         usernameCell.textContent = userData.username;
         newRow.appendChild(idCell);
         newRow.appendChild(usernameCell);
         tableBody.appendChild(newRow);
       });
     } catch (error) {
-      console.error('Error processing pixels:', error);
+      console.error('Error processing userlist:', error);
     }
   });
 
@@ -216,11 +218,18 @@ if (palletData) {
   }
 
   getPixels(socket);
+  getUserList(socket);
 
   function getPixels(socket){
     console.log('getPixels');
     socket.emit('get_pixels');
   }
+  
+  function getUserList(socket){
+    console.log('getUserList');
+    socket.emit('get_userlist');
+  }
+
   function submitPixels(socket, newPixels){
     //console.log(JSON.stringify(newPixels));
     socket.emit('submit_pixels', newPixels);

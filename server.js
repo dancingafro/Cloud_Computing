@@ -60,8 +60,8 @@ io.on('connection', (socket) => {
   console.log('A user connected', socket.id);
 
   // Store client info in the database
-  const query = "INSERT INTO connected_clients (socket_id) VALUES (?)";
-  db.query(query, [socket.id], (err, result) => {
+  const query = "INSERT INTO connected_clients (socket_id, username) VALUES (?,?)";
+  db.query(query, [socket.id,"test"], (err, result) => {
     if (err) throw err;
     console.log(`Client ${socket.id} added to the database.`);
   });
@@ -97,8 +97,8 @@ io.on('connection', (socket) => {
     updateClientLastInteraction(socket.id);
     (async () => {
         try {
-          const pixels = await getUserList(db);
-          socket.emit('refresh_userlist', pixels);
+          const userlist = await getUserList(db);
+          socket.emit('refresh_userlist', userlist);
         } catch (error) {
           console.error('Failed to get userlist from database:', error);
         }
@@ -218,6 +218,9 @@ async function broadCastPixels(io)
 {
     const pixels = await getPixelsData(db);
     io.emit('refresh_pixels', pixels);
+
+    const userlist = await getUserList(db);
+    io.emit('refresh_userlist', userlist);
 }
 
 
