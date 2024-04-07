@@ -88,8 +88,8 @@ io.on('connection', (socket) => {
   console.log('A user connected', socket.id);
 
   // Store client info in the database
-  const query = "INSERT INTO connected_clients (socket_id) VALUES (?)";
-  db.query(query, [socket.id], (err, result) => {
+  const query = "INSERT INTO connected_clients (socket_id, username) VALUES (?,?)";
+  db.query(query, [socket.id,"test"], (err, result) => {
     if (err) throw err;
     console.log(`Client ${socket.id} added to the database.`);
   });
@@ -121,6 +121,17 @@ io.on('connection', (socket) => {
       })();
   });
 
+  socket.on('get_userlist', () => {
+    updateClientLastInteraction(socket.id);
+    (async () => {
+        try {
+          const userlist = await getUserList(db);
+          socket.emit('refresh_userlist', userlist);
+        } catch (error) {
+          console.error('Failed to get userlist from database:', error);
+        }
+      })();
+  });
 
   // Handle client disconnection
   socket.on('disconnect', () => {
@@ -195,6 +206,21 @@ async function getPixelsData(connection) {
     });
 }
 
+async function getUserList(connection) {
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT * FROM connected_clients';
+    
+    connection.query(query, (err, results) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        reject(err); // Reject the Promise if there's an error
+      } else {
+        resolve(results); // Resolve the Promise with the query results
+      }
+    });
+  });
+}
+
 
 async function updatePixelsData(connection, pixelArray) {
     if (Array.isArray(pixelArray)) {
@@ -220,6 +246,9 @@ async function broadCastPixels(io)
 {
     const pixels = await getPixelsData(db);
     io.emit('refresh_pixels', pixels);
+
+    const userlist = await getUserList(db);
+    io.emit('refresh_userlist', userlist);
 }
 
 
