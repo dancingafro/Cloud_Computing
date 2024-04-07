@@ -17,8 +17,13 @@ sudo dnf install mysql80-community-release-el9-1.noarch.rpm -y
 sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
 sudo dnf install mysql-community-client -y
 
-# get RDS SSL Certificate
-sudo wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+# Download the certificate to a secure location outside /var/www/html
+sudo wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /etc/ssl/certs/rds-ca-bundle.pem
+
+# Set the ownership and permissions so that only root and web server's user can read it
+sudo chown root:apache /etc/ssl/certs/rds-ca-bundle.pem
+sudo chmod 640 /etc/ssl/certs/rds-ca-bundle.pem
+
 
 # Install Git
 sudo yum install git -y
