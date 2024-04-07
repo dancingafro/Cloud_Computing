@@ -18,9 +18,6 @@ sudo dnf install mysql80-community-release-el9-1.noarch.rpm -y
 sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
 sudo dnf install mysql-community-client -y
 
-# Install Firebase
-npm install firebase
-
 # Download the certificate to a secure location outside /var/www/html
 sudo wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /etc/ssl/certs/rds-ca-bundle.pem
 
@@ -38,6 +35,18 @@ sudo rm -rf /var/www/html/*
 # Clone the Git repository into the web root directory
 GIT_REPO="https://github.com/dancingafro/Cloud_Computing.git"
 sudo git clone $GIT_REPO /var/www/html/
+
+# Navigate to your Node.js project directory
+cd /var/www/html/
+
+# Initialize a new Node.js project if needed
+sudo npm init -y
+
+# Install Firebase in your project directory
+sudo npm install firebase
+
+# Return to the root directory or continue with further commands
+cd ~
 
 # Set appropriate permissions for HTML, CSS, and PHP files
 sudo find /var/www/html/ -type f \( -name '*.html' -o -name '*.css' -o -name '*.php' \) -exec chmod 644 {} \;
