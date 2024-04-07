@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 function logUserToServer(email, loginType) {
-    fetch('YOUR_SERVER_ENDPOINT/log-user', {
+    fetch('/log-user', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -28,8 +28,9 @@ function logUserToServer(email, loginType) {
     .then(response => response.json())
     .then(data => {
         console.log('User logged:', data);
-        // Assuming data.token contains the session token or identifier
-        document.cookie = "userSession=" + data.token + ";path=/"; // Set cookie for the session
+        // Store the received token in sessionStorage
+        sessionStorage.setItem('userToken', data.token);
+        window.location.href = 'index.html'; // Redirect on successful login
     })
     .catch((error) => console.error('Error:', error));
 }
