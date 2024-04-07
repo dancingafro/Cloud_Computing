@@ -26,7 +26,11 @@ function logUserToServer(email, loginType) {
         body: JSON.stringify({ email, loginType }),
     })
     .then(response => response.json())
-    .then(data => console.log('User logged:', data))
+    .then(data => {
+        console.log('User logged:', data);
+        // Assuming data.token contains the session token or identifier
+        document.cookie = "userSession=" + data.token + ";path=/"; // Set cookie for the session
+    })
     .catch((error) => console.error('Error:', error));
 }
 
