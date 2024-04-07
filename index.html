@@ -49,12 +49,19 @@
   });
 
   socket.on('refresh_pixels', (data) => {
-      data.forEach(pixelData => {
-        let pixel = document.getElementById(pixelData.PIXEL_KEY);
+  try {
+    data.forEach(pixelData => {
+      let pixel = document.getElementById(pixelData.PIXEL_KEY);
+      if (pixel) { // Check if the element exists to avoid null reference errors
         pixel.style.backgroundColor = pixelData.COLOR;
-      })
-      .catch(error => console.error('Error:', error));
-  });
+      } else {
+        console.error('Pixel not found:', pixelData.PIXEL_KEY);
+      }
+    });
+  } catch (error) {
+    console.error('Error processing pixels:', error);
+  }
+});
 
   window.addEventListener('beforeunload', function (e) {
     // Send a message to the server indicating the client is disconnecting
@@ -159,19 +166,22 @@ if (palletData) {
         //   console.error('Error:', error);
         // });
         //submitPixels(socket, submittedPixels);
+        submitPixels(socket, submittedPixels);
       });
       container.appendChild(pixel);
       pixels.push(pixel); // Using push to add the element at the end of the array
     }
   }
+
   getPixels(socket);
+
   function getPixels(socket){
     console.log('getPixels');
     socket.emit('get_pixels');
   }
   function submitPixels(socket, newPixels){
     //console.log(JSON.stringify(newPixels));
-    socket.emit('submit_pixels', JSON.stringify(newPixels));
+    socket.emit('submit_pixels', newPixels);
   }
   
   // Function to change color of pixel
