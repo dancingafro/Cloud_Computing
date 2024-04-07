@@ -39,7 +39,7 @@ const db = createConnection({
   user: "root",
   password: "",
   database: "my_database",
-    ssl " {
+    ssl: {
         ca : readFileSync('/etc/ssl/certs/rds-ca-bundle.pem')
     }
 });
