@@ -17,6 +17,9 @@ sudo dnf install mysql80-community-release-el9-1.noarch.rpm -y
 sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
 sudo dnf install mysql-community-client -y
 
+# get RDS SSL Certificate
+sudo wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+
 # Install Git
 sudo yum install git -y
 
