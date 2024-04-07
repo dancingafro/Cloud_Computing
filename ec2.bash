@@ -2,6 +2,7 @@
 # Update package and start Apache web server
 sudo yum update -y
 sudo yum install httpd -y
+sudo yum install -y nodejs npm
 
 # Enable .htaccess by modifying the Apache configuration
 CONFIG_PATH="/etc/httpd/conf/httpd.conf"
@@ -34,6 +35,18 @@ sudo rm -rf /var/www/html/*
 # Clone the Git repository into the web root directory
 GIT_REPO="https://github.com/dancingafro/Cloud_Computing.git"
 sudo git clone $GIT_REPO /var/www/html/
+
+# Navigate to your Node.js project directory
+cd /var/www/html/
+
+# Initialize a new Node.js project if needed
+# sudo npm init -y
+
+# Install Firebase in your project directory
+sudo npm install firebase
+
+# Return to the root directory or continue with further commands
+cd ~
 
 # Set appropriate permissions for HTML, CSS, and PHP files
 sudo find /var/www/html/ -type f \( -name '*.html' -o -name '*.css' -o -name '*.php' \) -exec chmod 644 {} \;
