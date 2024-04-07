@@ -57,3 +57,49 @@ button {
 button:hover {
     background-color: #0056b3;
 }
+
+.gsi-material-button {
+    display: inline-flex;
+    align-items: center;
+    background-color: #fff;
+    color: #757575;
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,.25);
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+    cursor: pointer;
+    height: 40px;
+    min-width: 240px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.gsi-material-button:hover,
+.gsi-material-button:focus {
+    box-shadow: 0 0 3px 3px rgba(66,133,244,.3);
+}
+
+.gsi-material-button:active {
+    background-color: #eee;
+}
+
+.gsi-material-button-content-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    margin: 0;
+    width: 100%;
+}
+
+.gsi-material-button-icon {
+    display: flex;
+    align-items: center;
+    margin-right: 24px;
+}
+
+.gsi-material-button-contents {
+    text-transform: uppercase;
+    letter-spacing: .25px;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 16px;
+}

@@ -2,6 +2,7 @@
 # Update package and start Apache web server
 sudo yum update -y
 sudo yum install httpd -y
+sudo yum install -y nodejs npm
 
 # Enable .htaccess by modifying the Apache configuration
 CONFIG_PATH="/etc/httpd/conf/httpd.conf"
