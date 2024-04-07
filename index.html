@@ -29,41 +29,49 @@
 </style>
 </head>
 <body>
-<div class="container" id="container">
-<div class="pallet">
-    <div class="colorPickerContainer">
-      <input type="color" id="colorPicker" value="#ffffff">
-      <button id="randomColor">Random Color</button>
+  <div class="container" id="container">
+    <div class="pallet">
+        <div class="colorPickerContainer">
+          <input type="color" id="colorPicker" value="#ffffff">
+          <button id="randomColor">Random Color</button>
+        </div>
+        <div class="floatSliderContainer">
+          <input type="range" id="brushRadius" name="brushRadius" min="0" max="10" step="0.1" value="0">
+          <span id="sliderValue">1</span>
+        </div>
+        <div class = "userlist">
+          <table id = "usertable" border="1" cellpadding="2" cellspacing="2">
+            <thead>
+              <tr>
+                <td>Username</td>
+                <td>Last Interaction</td>
+              </tr>
+            </thead>
+            <tbody>          
+            </tbody>
+          </table>      
+        </div>
     </div>
-    <div class="floatSliderContainer">
-      <input type="range" id="brushRadius" name="brushRadius" min="0" max="10" step="0.1" value="0">
-      <span id="sliderValue">1</span>
-    </div>
-    <div class = "userlist">
-      <table id = "usertable" border="1" cellpadding="2" cellspacing="2">
-        <thead>
-          <tr>
-            <td>Username</td>
-            <td>Last Interaction</td>
-          </tr>
-        </thead>
-        <tbody>          
-        </tbody>
-      </table>      
-    </div>
-</div>
-
-
 <script src="socket.io.js"></script>
 <script>
-  const socket = io('localhost:3000');
+  const userToken = sessionStorage.getItem('userToken');
+
+  const socket = io('localhost:3000',
+  {
+    query: {
+      userToken: userToken
+    }
+  });
 
   socket.on('connect', () => {
-    console.log('Connected to the server');
+    console.log('Connecting to the server');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Disconnected from the server');
   });
 
   socket.on('refresh_pixels', (data) => {
-    console.log('refresh pixels');
   try {
     data.forEach(pixelData => {
       const elementId = pixelData.x + '-' + pixelData.y;
@@ -79,7 +87,7 @@
   }
 });
 
-  socket.on('refresh_userlist', (data) => {
+socket.on('refresh_userlist', (data) => {
     console.log('refresh_userlist');
     var tableBody = document.querySelector("#usertable tbody");
     tableBody.innerHTML = '';
@@ -104,12 +112,10 @@
     }
   });
 
-  window.addEventListener('beforeunload', function (e) {
-    // Send a message to the server indicating the client is disconnecting
-    // Note: The disconnect event is automatically handled by Socket.IO,
-    // but you can send additional messages here if needed.
-    socket.disconnect();
-  });
+window.addEventListener('beforeunload', function (e) {
+
+  socket.disconnect();
+});
 
   class Pixel {
     constructor(x, y, color) {
@@ -126,6 +132,7 @@
   const palletData = getCookie('pallet');
   const brushRadius = document.getElementById('brushRadius');
   const sliderValue = document.getElementById('sliderValue');
+
   let seconds = 0;
 
 // Check if the cookie was found and has data
@@ -200,22 +207,8 @@ if (palletData) {
             }
           }
         }
-        //var formData = new FormData();
-        // Send the FormData object via fetch() POST request
-        // fetch('Pixels.php', {
-        //   method: 'POST',
-        //   body: JSON.stringify(submittedPixels),
-        // })
-        // .then(response => {
-        //   if (!response.ok) {
-        //     console.error('Error submitting form data');
-        //   }
-        // })
-        // .catch(error => {
-        //   console.error('Error:', error);
-        // });
-        //submitPixels(socket, submittedPixels);
-        submitPixels(socket, submittedPixels);
+
+        submitPixels(socket, submittedPixels, userToken);
       });
       container.appendChild(pixel);
       pixels.push(pixel); // Using push to add the element at the end of the array
@@ -223,21 +216,28 @@ if (palletData) {
   }
 
   getPixels(socket);
-  getUserList(socket);
+
+  setInterval(() => {
+    getUserList(socket, userToken);
+  }, 10000);
 
   function getPixels(socket){
     console.log('getPixels');
-    socket.emit('get_pixels');
+    socket.emit('get_pixels', userToken);
   }
-  
-  function getUserList(socket){
-    console.log('getUserList');
-    socket.emit('get_userlist');
+  function submitPixels(socket, newPixels, userToken){
+    //console.log(userToken);
+    let data = {
+      userToken: userToken,
+      pixels: newPixels
+    };
+    //console.log(JSON.stringify(newPixels));
+    socket.emit('submit_pixels', data);
   }
 
-  function submitPixels(socket, newPixels){
-    //console.log(JSON.stringify(newPixels));
-    socket.emit('submit_pixels', newPixels);
+  function getUserList(socket, userToken){
+    console.log('getUserList');
+    socket.emit('get_userlist', userToken);
   }
   
   // Function to change color of pixel
@@ -293,21 +293,6 @@ if (palletData) {
   }
 
   
-  // function GetFromServer()
-  // {
-  //   fetch('Pixels.php',{method: 'GET'})
-  //   .then(response => response.json())
-  //   .then(data => {
-	//     data.forEach(pixelData => {
-  //       let pixel = document.getElementById(pixelData.PIXEL_KEY);
-  //       pixel.style.backgroundColor = pixelData.COLOR;
-	//     });
-  //   })
-  //   .catch(error => console.error('Error:', error));
-  // }
-
-  // Start the timer
-  //setInterval(GetFromServer, 100); // Update every N mili-seconds
 </script>
 </body>
 </html>

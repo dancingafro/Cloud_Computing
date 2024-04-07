@@ -111,7 +111,7 @@ io.on('connection', (socket) => {
 
 
   // Listen for data update requests from clients
-  socket.on('submit_pixels', (data) => {
+  socket.on('submit_pixels', async (data) => {
     const userToken = data.userToken;
     //console.log('submit tokens:', userToken);
     userTokenValid(userToken).then((valid) => {
@@ -134,7 +134,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('get_pixels', (userToken) => {
+  socket.on('get_pixels', async (userToken) => {
     userTokenValid(userToken).then((valid) => {
       if(!valid){
         console.error('Invalid user token');
@@ -152,7 +152,13 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('get_userlist', () => {
+  socket.on('get_userlist', async (userToken) => {
+    userTokenValid(userToken).then((valid) => {
+      if(!valid){
+        console.error('Invalid user token');
+        return;
+      }
+
     updateClientLastInteraction(socket.id);
     (async () => {
         try {
@@ -165,7 +171,7 @@ io.on('connection', (socket) => {
   });
 
   // Handle client disconnection
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     console.log(`User disconnected ${socket.id}`);
     // Remove client info from the database
     const deleteQuery = "DELETE FROM connected_clients WHERE socket_id = ?";
@@ -175,12 +181,13 @@ io.on('connection', (socket) => {
     });
   });
 });
+});
 
 server.listen(3000, () => {
   console.log('Server is running on port 3000');
 });
 
-setInterval(() => {
+setInterval(async () => {
     const thresholdMinutes = 10; // Duration to consider a client inactive
     const removeInactiveClientsQuery = `
       DELETE FROM connected_clients 
@@ -195,7 +202,7 @@ setInterval(() => {
     });
 }, 60000); // Check every minute (60000 milliseconds)
 
-setInterval(() => {
+setInterval(async () => {
     broadCastPixels(io);
 },1000)
 
