@@ -8,7 +8,7 @@ import {
   GoogleAuthProvider 
 } from 'https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js';
 
-// Firebase configuration for your web app
+// Firebase configuration for web app
 const firebaseConfig = {
   apiKey: "AIzaSyDgHHdYEEYzzMSSCefjQbYj9bXY4Oe5rMc",
   authDomain: "digipenplaceproject.firebaseapp.com",
