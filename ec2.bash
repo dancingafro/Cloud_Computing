@@ -2,6 +2,7 @@
 # Update package and start Apache web server
 sudo yum update -y
 sudo yum install httpd -y
+sudo yum install -y nodejs npm
 
 # Enable .htaccess by modifying the Apache configuration
 CONFIG_PATH="/etc/httpd/conf/httpd.conf"
@@ -16,6 +17,9 @@ sudo wget https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
 sudo dnf install mysql80-community-release-el9-1.noarch.rpm -y
 sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
 sudo dnf install mysql-community-client -y
+
+# Install Firebase
+npm install firebase
 
 # Download the certificate to a secure location outside /var/www/html
 sudo wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /etc/ssl/certs/rds-ca-bundle.pem
