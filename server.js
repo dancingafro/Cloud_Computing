@@ -93,6 +93,17 @@ io.on('connection', (socket) => {
       })();
   });
 
+  socket.on('get_userlist', () => {
+    updateClientLastInteraction(socket.id);
+    (async () => {
+        try {
+          const pixels = await getUserList(db);
+          socket.emit('refresh_userlist', pixels);
+        } catch (error) {
+          console.error('Failed to get userlist from database:', error);
+        }
+      })();
+  });
 
   // Handle client disconnection
   socket.on('disconnect', () => {
@@ -165,6 +176,21 @@ async function getPixelsData(connection) {
         }
       });
     });
+}
+
+async function getUserList(connection) {
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT * FROM connected_clients';
+    
+    connection.query(query, (err, results) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        reject(err); // Reject the Promise if there's an error
+      } else {
+        resolve(results); // Resolve the Promise with the query results
+      }
+    });
+  });
 }
 
 

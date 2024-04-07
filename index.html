@@ -39,7 +39,21 @@
       <input type="range" id="brushRadius" name="brushRadius" min="0" max="10" step="0.1" value="0">
       <span id="sliderValue">1</span>
     </div>
+    <div class = "userlist">
+      <table id = "usertable" border="1" cellpadding="2" cellspacing="2">
+        <thead>
+          <tr>
+            <td>ID</td>
+            <td>USERNAME</td>
+          </tr>
+        </thead>
+        <tbody>          
+        </tbody>
+      </table>      
+    </div>
 </div>
+
+
 <script src="socket.io.js"></script>
 <script>
   const socket = io('localhost:3000');
@@ -63,6 +77,25 @@
     console.error('Error processing pixels:', error);
   }
 });
+
+  socket.on('refresh_userlist', (data) => {
+    try {
+      data.forEach(userData => {
+        var tableBody = document.querySelector("#users tbody");
+        var newRow = document.createElement('tr');
+
+        var idCell = document.createElement('td');
+        var usernameCell = document.createElement('td');
+        idCell.textContent = userData.id;
+        usernameCell.textContent = userData.username;
+        newRow.appendChild(idCell);
+        newRow.appendChild(usernameCell);
+        tableBody.appendChild(newRow);
+      });
+    } catch (error) {
+      console.error('Error processing pixels:', error);
+    }
+  });
 
   window.addEventListener('beforeunload', function (e) {
     // Send a message to the server indicating the client is disconnecting
