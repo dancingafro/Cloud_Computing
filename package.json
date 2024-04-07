@@ -1,26 +1,15 @@
 {
-  "name": "hello-immersive",
+  "name": "canvas-socket",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "test": "vitest --reporter=verbose",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest --run",
-    "clean": "rmdir /s dist node_modules package-lock.json"
+    "start": "node server.js"
   },
   "devDependencies": {
-    "@types/mysql": "^2.15.26",
-    "@vitest/ui": "^1.1.1",
-    "typescript": "^5.2.2",
-    "vite": "^5.0.8",
-    "vitest": "^1.1.1"
+    "@types/mysql": "^2.15.26"
   },
   "dependencies": {
-    "@babylonjs/core": "^6.36.1",
     "express": "^4.19.2",
     "mysql": "^2.18.1",
     "socket.io": "^4.7.5"

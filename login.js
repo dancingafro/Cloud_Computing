@@ -17,12 +17,32 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+function logUserToServer(email, loginType) {
+    fetch('/log-user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, loginType }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('User logged:', data);
+        // Store the received token in sessionStorage
+        sessionStorage.setItem('userToken', data.token);
+        window.location.href = 'index.html'; // Redirect on successful login
+    })
+    .catch((error) => console.error('Error:', error));
+}
+
 window.signInWithGoogle = function() {
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider)
         .then((result) => {
+            const email = result.user.email;
+            logUserToServer(email, 'Google'); // Log user as Google login type
             window.location.href = 'index.html'; // Redirect on successful login
-        })
+        });
 };
 
 window.signUpWithEmailPassword = function() {
@@ -31,7 +51,7 @@ window.signUpWithEmailPassword = function() {
 
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            // Signed up
+            logUserToServer(email, 'Email'); // Log user as Email login type
             window.location.href = 'index.html'; // Redirect or update UI
         })
         .catch((error) => {
@@ -39,13 +59,13 @@ window.signUpWithEmailPassword = function() {
         });
 };
 
-// Event listener for email/password form submission
 document.getElementById('emailPasswordForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const email = document.getElementById('uname').value;
     const password = document.getElementById('psw').value;
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
+            logUserToServer(email, 'Email'); // Log user as Email login type
             window.location.href = 'index.html'; // Redirect on successful login
         })
         .catch((error) => {

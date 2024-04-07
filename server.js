@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createConnection, escape} from 'mysql';
-import { readFileSync } from 'fs';
+
 
 class Pixel {
     constructor(x, y, color) {
@@ -14,6 +14,7 @@ class Pixel {
 
 // Setup Express and HTTP server
 const app = express();
+
 const server = createServer(app);
 const io = new Server(server,{
     cors: {
@@ -25,18 +26,19 @@ const io = new Server(server,{
 }
 );
 
-const host = 'http://localhost';
 
 // Setup MySQL connection
+// ssl : {
+//   ca : readFileSync('/etc/ssl/certs/rds-ca-bundle.pem')
+//  }
+
 const db = createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'my_database',
-  ssl : {
-   ca : readFileSync('/etc/ssl/certs/rds-ca-bundle.pem')
-  }
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "my_database"
 });
+
 
 db.connect(err => {
   if (err) throw err;
