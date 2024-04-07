@@ -43,8 +43,8 @@
       <table id = "usertable" border="1" cellpadding="2" cellspacing="2">
         <thead>
           <tr>
-            <td>ID</td>
-            <td>USERNAME</td>
+            <td>Username</td>
+            <td>Last Interaction</td>
           </tr>
         </thead>
         <tbody>          
@@ -86,12 +86,17 @@
     try {
       data.forEach(userData => {
         var newRow = document.createElement('tr');
-        var idCell = document.createElement('td');
         var usernameCell = document.createElement('td');
-        idCell.textContent = userData.socket_id;
+        var lastInteractionCell = document.createElement('td');
+        
+        var sqlDate = userData.last_interaction;
+        const [datePart, timePart] = sqlDate.split('T');
+        const [hours, seconds] = timePart.split('.');
+        lastInteractionCell.textContent = hours;
         usernameCell.textContent = userData.username;
-        newRow.appendChild(idCell);
+        
         newRow.appendChild(usernameCell);
+        newRow.appendChild(lastInteractionCell);
         tableBody.appendChild(newRow);
       });
     } catch (error) {

@@ -93,7 +93,7 @@ io.on('connection', (socket) => {
 
   // Store client info in the database
   const query = "INSERT INTO connected_clients (socket_id, username) VALUES (?,?)";
-  db.query(query, [socket.id,"test"], (err, result) => {
+  db.query(query, [socket.id,"user"], (err, result) => {
     if (err) throw err;
     console.log(`Client ${socket.id} added to the database.`);
   });
