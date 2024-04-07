@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createConnection, escape} from 'mysql';
+import { readFileSync } from 'fs';
 import cors from 'cors';
 
 
@@ -37,7 +38,10 @@ const db = createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "my_database"
+  database: "my_database",
+    ssl " {
+        ca : readFileSync('/etc/ssl/certs/rds-ca-bundle.pem')
+    }
 });
 
 
