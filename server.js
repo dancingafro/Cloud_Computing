@@ -2,6 +2,15 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createConnection, escape} from 'mysql';
+
+class Pixel {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+    }
+}
+
 // Setup Express and HTTP server
 const app = express();
 const server = createServer(app);
@@ -30,6 +39,8 @@ db.connect(err => {
   console.log('Connected to the database.');
 });
 
+//await initDatabase();
+
 io.on('connection', (socket) => {
   console.log('A user connected', socket.id);
 
@@ -41,12 +52,12 @@ io.on('connection', (socket) => {
   });
 
   // Listen for data update requests from clients
-  socket.on('submit_pixels', (data) => {
+  socket.on('submit_pixels', (pixelArray) => {
     updateClientLastInteraction(socket.id);
     //console.log('Data received:', data);
     (async () => {
         try {
-          await updatePixelsData(db, data);
+          await updatePixelsData(db, pixelArray);
           broadCastPixels(io);
           
         } catch (error) {
@@ -99,11 +110,15 @@ setInterval(() => {
     });
 }, 60000); // Check every minute (60000 milliseconds)
 
+setInterval(() => {
+    broadCastPixels(io);
+},1000)
+
 function updateClientLastInteraction(socketId){
     const updateTimestampQuery = "UPDATE connected_clients SET last_interaction = NOW() WHERE socket_id = ?";
     db.query(updateTimestampQuery, [socketId], (err, result) => {
       if (err) throw err;
-      console.log(`Updated last interaction for client ${socketId}.`);
+      //console.log(`Updated last interaction for client ${socketId}.`);
     });
 }
 
@@ -124,7 +139,7 @@ function queryAsync(connection, query) {
 // Make sure to mark the function as async
 async function getPixelsData(connection) {
     return new Promise((resolve, reject) => {
-      const query = 'SELECT * FROM PIXELS';
+      const query = 'SELECT * FROM pixels';
       
       connection.query(query, (err, results) => {
         if (err) {
@@ -138,52 +153,42 @@ async function getPixelsData(connection) {
 }
 
 
-async function updatePixelsData(connection, data) {
-    if (Array.isArray(data)) {
-      for (let item of data) {
-        if (item.key && item.color) {
-          const key = escape(item.key);
-          const color = escape(item.color);
-          try {
-            const checkQuery = `SELECT * FROM PIXELS WHERE PIXEL_KEY = ${key}`;
-            const [queryResult] = await queryAsync(connection, checkQuery);
-  
-            if (queryResult && queryResult.length > 0) {
-              // If a record exists, update it
-              const updateQuery = `UPDATE PIXELS SET COLOR = ${color} WHERE PIXEL_KEY = ${key}`;
-              await queryAsync(connection, updateQuery);
-              console.log(`Record with key ${item.key} updated successfully.`);
-            } else {
-              // If no record exists, insert a new one
-              const insertQuery = `INSERT INTO PIXELS (PIXEL_KEY, COLOR) VALUES (${key}, ${color})`;
-              await queryAsync(connection, insertQuery);
-              console.log(`New record with key ${item.key} inserted successfully.`);
-            }
-          } catch (err) {
-            console.error('Database operation failed:', err);
-          }
-        } else {
-          console.log("Missing key or color for some items.");
-        }
-      }
-    } else {
-      console.log("Invalid data format.");
+async function updatePixelsData(connection, pixelArray) {
+    if (Array.isArray(pixelArray)) {
+
+        // Construct the VALUES part of the query dynamically
+        const values = pixelArray.map(pixel => 
+            `(${escape(pixel.x)}, ${escape(pixel.y)}, ${escape(pixel.color)})`
+        ).join(', ');
+
+        // Complete SQL statement
+        const sql = `
+            INSERT INTO pixels (x, y, color) VALUES ${values}
+            ON DUPLICATE KEY UPDATE color = VALUES(color);
+        `;
+
+        // Assuming you're using the mysql package in Node.js, execute the query
+        await queryAsync(connection, sql);
     }
+
 }
 
 async function broadCastPixels(io)
 {
     const pixels = await getPixelsData(db);
     io.emit('refresh_pixels', pixels);
-//   fetch(host+'/Pixels.php',{method: 'GET'})
-//   .then(response =>{
-//     if (!response.ok) {
-//       console.error('Error fetching pixels');
-//     }
-//     return response.json();
-//   } )
-//   .then(data => {
-//     io.emit('refresh_pixels', data)
-//     })
-//   .catch(error => console.error('Broadcast pixels Error:', error));
+}
+
+
+async function initDatabase() {
+    let pixels = []; // Initialize the array
+
+    for (let i = 0; i < 90; i++) {
+        for (let j = 0; j < 150; j++) {
+            const pixel = new Pixel(i, j, '#FFFFFF'); // Create a new Pixel object
+            pixels.push(pixel); // Add the Pixel object to the array
+        }
+    }
+
+    updatePixelsData(db, pixels); // Assuming you have a function to update the data
 }
