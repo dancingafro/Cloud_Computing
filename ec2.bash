@@ -40,7 +40,7 @@ sudo git clone $GIT_REPO /var/www/html/
 cd /var/www/html/
 
 # Initialize a new Node.js project if needed
-sudo npm init -y
+# sudo npm init -y
 
 # Install Firebase in your project directory
 sudo npm install firebase
