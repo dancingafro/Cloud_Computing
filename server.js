@@ -26,6 +26,31 @@ const io = new Server(server,{
 }
 );
 
+app.post('/log-user', (req, res) => {
+  const { email, loginType } = req.body;
+  
+  // Generate a secure token here (for simplicity, we'll use a placeholder)
+  const token = 'SECURE_TOKEN_' + new Date().getTime();
+  
+  // SQL to insert or update the user's record
+  const sql = `
+    INSERT INTO users (email, login_type, token) 
+    VALUES (?, ?, ?) 
+    ON DUPLICATE KEY UPDATE 
+      login_type = VALUES(login_type), 
+      token = VALUES(token), 
+      last_login = CURRENT_TIMESTAMP`;
+  
+  // Execute the SQL query
+  connection.query(sql, [email, loginType, token], (error, results) => {
+    if (error) {
+      return res.status(500).send('Error logging user to database');
+    }
+    // Send the token back to the client
+    res.json({ token });
+  });
+});
+
 
 // Setup MySQL connection
 // ssl : {
@@ -57,6 +82,7 @@ db.query('SELECT COUNT(*) AS count FROM pixels',  (error, results, fields) => {
         console.log('Database already has data, no initialization needed.');
     }
   });
+  
 
 io.on('connection', (socket) => {
   console.log('A user connected', socket.id);
