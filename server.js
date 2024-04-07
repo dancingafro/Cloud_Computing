@@ -28,8 +28,6 @@ const io = new Server(server,{
 }
 );
 
-
-
 // Setup MySQL connection
 // ssl : {
 //   ca : readFileSync('/etc/ssl/certs/rds-ca-bundle.pem')
@@ -89,33 +87,61 @@ db.query('SELECT COUNT(*) AS count FROM pixels',  (error, results, fields) => {
   });
 
 io.on('connection', (socket) => {
-  console.log('A user connected', socket.id);
 
-  // Store client info in the database
-  const query = "INSERT INTO connected_clients (socket_id, username) VALUES (?,?)";
-  db.query(query, [socket.id,"test"], (err, result) => {
-    if (err) throw err;
-    console.log(`Client ${socket.id} added to the database.`);
+  const userToken = socket.handshake.query.userToken;
+
+  userTokenValid(userToken).then(async (valid) => {
+    if(!valid){
+      console.error('Invalid user token');
+      socket.disconnect();
+      return;
+    }
+
+    const userEmail = await getUserEmail(userToken);
+    console.log('A user connected', socket.id);
+    //get the username from the database
+    // Store client info in the database
+    const query = "INSERT INTO connected_clients (socket_id, username) VALUES (?,?)";
+    db.query(query, [socket.id, userEmail], (err, result) => {
+      if (err) throw err; 
+      console.log(`Client ${socket.id} added to the database.`);
+    });
   });
+
+
 
   // Listen for data update requests from clients
-  socket.on('submit_pixels', (pixelArray) => {
-    updateClientLastInteraction(socket.id);
-    //console.log('Data received:', data);
-    (async () => {
-        try {
-          await updatePixelsData(db, pixelArray);
-          broadCastPixels(io);
-          
-        } catch (error) {
-          console.error('Failed to get pixels from database:', error);
-        }
-      })();
+  socket.on('submit_pixels', (data) => {
+    const userToken = data.userToken;
+    //console.log('submit tokens:', userToken);
+    userTokenValid(userToken).then((valid) => {
+      if(!valid){
+        console.error('Invalid user token');
+        return;
+      }
+      const pixels = data.pixels;
+      updateClientLastInteraction(socket.id);
+      //console.log('Data received:', data);
+      (async () => {
+          try {
+            await updatePixelsData(db, data.pixels);
+            broadCastPixels(io);
+            
+          } catch (error) {
+            console.error('Failed to get pixels from database:', error);
+          }
+        })();
+    });
   });
 
-  socket.on('get_pixels', () => {
-    updateClientLastInteraction(socket.id);
-    (async () => {
+  socket.on('get_pixels', (userToken) => {
+    userTokenValid(userToken).then((valid) => {
+      if(!valid){
+        console.error('Invalid user token');
+        return;
+      }
+      updateClientLastInteraction(socket.id);
+      (async () => {
         try {
           const pixels = await getPixelsData(db);
           socket.emit('refresh_pixels', pixels);
@@ -123,6 +149,7 @@ io.on('connection', (socket) => {
           console.error('Failed to get pixels from database:', error);
         }
       })();
+    });
   });
 
   socket.on('get_userlist', () => {
@@ -267,4 +294,38 @@ async function initDatabase() {
     }
 
     updatePixelsData(db, pixels); // Assuming you have a function to update the data
+}
+
+async function getUserEmail(userToken){
+    return new Promise((resolve, reject) => {
+        const query = `SELECT email FROM users WHERE token = '${userToken}'`;
+        db.query(query, (err, results) => {
+            if (err) {
+                console.error('Error executing query:', err);
+                reject(err);
+            } else if (results.length === 0) {
+                console.error('User not found');
+                resolve(null);
+            } else {
+                resolve(results[0].email);
+            }
+        });
+    });
+}
+
+async function userTokenValid(userToken){
+  return new Promise((resolve, reject) => {
+    const query = `SELECT * FROM users WHERE token = '${userToken}'`;
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        reject(err);
+      } else if (results.length === 0) {
+        console.error('User not found');
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
 }
