@@ -1,15 +1,25 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const mysql = require('mysql');
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { createConnection } from 'mysql';
 
 // Setup Express and HTTP server
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+const server = createServer(app);
+const io = new Server(server,{
+    cors: {
+        origin: "*", // This allows all domains. For production, specify your domain e.g., "http://example.com"
+        methods: ["GET", "POST", "UPDATE"], // Allowed HTTP methods
+        //allowedHeaders: ["my-custom-header"], // Custom headers here
+        credentials: true // This allows cookies and credentials to be sent along with the request
+    }
+}
+);
+
+const host = 'http://localhost';
 
 // Setup MySQL connection
-const db = mysql.createConnection({
+const db = createConnection({
   host: 'localhost',
   user: 'root',
   password: '',
@@ -32,18 +42,44 @@ io.on('connection', (socket) => {
   });
 
   // Listen for data update requests from clients
-  socket.on('updateData', (data) => {
-    // Assuming data has properties `tableName` and `newValue`
-    const updateQuery = `UPDATE ${data.tableName} SET value = ? WHERE id = 1`; // Example query
-    db.query(updateQuery, [data.newValue], (err, result) => {
-      if (err) {
-        socket.emit('updateStatus', 'Error updating database');
-        throw err;
-      }
-      console.log(`Database updated. Rows affected: ${result.affectedRows}`);
-      socket.emit('updateStatus', 'Database update completed');
+  socket.on('submit_pixels', (data) => {
+    UpdateClientLastInteraction(socket.id);
+    //console.log('Data received:', data);
+    fetch(host+'/Pixels.php', {
+        method: 'POST',
+        body: data,
+      })
+      .then(response => {
+        if (!response.ok) {
+          console.error('Error submitting form data');
+        }
+
+      })
+      .then(()=>{
+        BroadCastPixels(io);
+      })
+      .catch(error => {
+        console.error('Error:', error);
     });
   });
+
+  socket.on('get_pixels', () => {
+    UpdateClientLastInteraction(socket.id);
+    console.log(socket.id, 'requested pixels')
+    fetch(host+'/Pixels.php',{method: 'GET'})
+    .then(response => {
+      if (!response.ok) {
+        console.error('Error fetching pixels');
+      }
+      return response.json();
+    })
+    .then(data => {
+        console.log('Get pixels:', data);
+      socket.emit('refresh_pixels', data);
+    })
+    .catch(error => console.error('Get pixels Error:', error));
+  });
+
 
   // Handle client disconnection
   socket.on('disconnect', () => {
@@ -82,4 +118,19 @@ function UpdateClientLastInteraction(socketId){
       if (err) throw err;
       console.log(`Updated last interaction for client ${socketId}.`);
     });
+}
+
+function BroadCastPixels(io)
+{
+  fetch(host+'/Pixels.php',{method: 'GET'})
+  .then(response =>{
+    if (!response.ok) {
+      console.error('Error fetching pixels');
+    }
+    return response.json();
+  } )
+  .then(data => {
+    io.emit('refresh_pixels', data)
+    })
+  .catch(error => console.error('Broadcast pixels Error:', error));
 }

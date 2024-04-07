@@ -42,12 +42,19 @@
 </div>
 <script src="socket.io.js"></script>
 <script>
-    const socket = io('localhost:3000');
+  const socket = io('localhost:3000');
 
   socket.on('connect', () => {
     console.log('Connected to the server');
   });
 
+  socket.on('refresh_pixels', (data) => {
+      data.forEach(pixelData => {
+        let pixel = document.getElementById(pixelData.PIXEL_KEY);
+        pixel.style.backgroundColor = pixelData.COLOR;
+      })
+      .catch(error => console.error('Error:', error));
+  });
 
   window.addEventListener('beforeunload', function (e) {
     // Send a message to the server indicating the client is disconnecting
@@ -137,24 +144,34 @@ if (palletData) {
             }
           }
         }
-        var formData = new FormData();
+        //var formData = new FormData();
         // Send the FormData object via fetch() POST request
-        fetch('Pixels.php', {
-          method: 'POST',
-          body: JSON.stringify(submittedPixels),
-        })
-        .then(response => {
-          if (!response.ok) {
-            console.error('Error submitting form data');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
+        // fetch('Pixels.php', {
+        //   method: 'POST',
+        //   body: JSON.stringify(submittedPixels),
+        // })
+        // .then(response => {
+        //   if (!response.ok) {
+        //     console.error('Error submitting form data');
+        //   }
+        // })
+        // .catch(error => {
+        //   console.error('Error:', error);
+        // });
+        //submitPixels(socket, submittedPixels);
       });
       container.appendChild(pixel);
       pixels.push(pixel); // Using push to add the element at the end of the array
     }
+  }
+  getPixels(socket);
+  function getPixels(socket){
+    console.log('getPixels');
+    socket.emit('get_pixels');
+  }
+  function submitPixels(socket, newPixels){
+    //console.log(JSON.stringify(newPixels));
+    socket.emit('submit_pixels', JSON.stringify(newPixels));
   }
   
   // Function to change color of pixel
@@ -210,21 +227,21 @@ if (palletData) {
   }
 
   
-  function GetFromServer()
-  {
-    fetch('Pixels.php',{method: 'GET'})
-    .then(response => response.json())
-    .then(data => {
-	    data.forEach(pixelData => {
-        let pixel = document.getElementById(pixelData.PIXEL_KEY);
-        pixel.style.backgroundColor = pixelData.COLOR;
-	    });
-    })
-    .catch(error => console.error('Error:', error));
-  }
+  // function GetFromServer()
+  // {
+  //   fetch('Pixels.php',{method: 'GET'})
+  //   .then(response => response.json())
+  //   .then(data => {
+	//     data.forEach(pixelData => {
+  //       let pixel = document.getElementById(pixelData.PIXEL_KEY);
+  //       pixel.style.backgroundColor = pixelData.COLOR;
+	//     });
+  //   })
+  //   .catch(error => console.error('Error:', error));
+  // }
 
   // Start the timer
-  setInterval(GetFromServer, 100); // Update every N mili-seconds
+  //setInterval(GetFromServer, 100); // Update every N mili-seconds
 </script>
 </body>
 </html>
