@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createConnection, escape} from 'mysql';
+import cors from 'cors';
 
 
 class Pixel {
@@ -14,7 +15,8 @@ class Pixel {
 
 // Setup Express and HTTP server
 const app = express();
-
+app.use(cors());
+app.use(express.json());
 const server = createServer(app);
 const io = new Server(server,{
     cors: {
@@ -26,30 +28,6 @@ const io = new Server(server,{
 }
 );
 
-app.post('/log-user', (req, res) => {
-  const { email, loginType } = req.body;
-  
-  // Generate a secure token here (for simplicity, we'll use a placeholder)
-  const token = 'SECURE_TOKEN_' + new Date().getTime();
-  
-  // SQL to insert or update the user's record
-  const sql = `
-    INSERT INTO users (email, login_type, token) 
-    VALUES (?, ?, ?) 
-    ON DUPLICATE KEY UPDATE 
-      login_type = VALUES(login_type), 
-      token = VALUES(token), 
-      last_login = CURRENT_TIMESTAMP`;
-  
-  // Execute the SQL query
-  connection.query(sql, [email, loginType, token], (error, results) => {
-    if (error) {
-      return res.status(500).send('Error logging user to database');
-    }
-    // Send the token back to the client
-    res.json({ token });
-  });
-});
 
 
 // Setup MySQL connection
@@ -83,6 +61,32 @@ db.query('SELECT COUNT(*) AS count FROM pixels',  (error, results, fields) => {
     }
   });
   
+
+  app.post('/log-user', (req, res) => {
+    console.log("log-user")
+    const { email, loginType } = req.body;
+    
+    // Generate a secure token here (for simplicity, we'll use a placeholder)
+    const token = 'SECURE_TOKEN_' + new Date().getTime();
+    
+    // SQL to insert or update the user's record
+    const sql = `
+      INSERT INTO users (email, login_type, token) 
+      VALUES (?, ?, ?) 
+      ON DUPLICATE KEY UPDATE 
+        login_type = VALUES(login_type), 
+        token = VALUES(token), 
+        last_login = CURRENT_TIMESTAMP`;
+    
+    // Execute the SQL query
+    db.query(sql, [email, loginType, token], (error, results) => {
+      if (error) {
+        return res.status(500).send('Error logging user to database');
+      }
+      // Send the token back to the client
+      res.json({ token });
+    });
+  });
 
 io.on('connection', (socket) => {
   console.log('A user connected', socket.id);
