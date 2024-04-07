@@ -51,11 +51,12 @@
   socket.on('refresh_pixels', (data) => {
   try {
     data.forEach(pixelData => {
-      let pixel = document.getElementById(pixelData.PIXEL_KEY);
+      const elementId = pixelData.x + '-' + pixelData.y;
+      let pixel = document.getElementById(elementId);
       if (pixel) { // Check if the element exists to avoid null reference errors
-        pixel.style.backgroundColor = pixelData.COLOR;
+        pixel.style.backgroundColor = pixelData.color;
       } else {
-        console.error('Pixel not found:', pixelData.PIXEL_KEY);
+        console.error('Pixel not found:', pixelData.x, pixelData.y);
       }
     });
   } catch (error) {
@@ -70,6 +71,13 @@
     socket.disconnect();
   });
 
+  class Pixel {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+    }
+}
 
 
   const container = document.getElementById('container');
@@ -122,6 +130,7 @@ if (palletData) {
     updatePalletCookie(); // Cookie expires in 30 days
     console.log('colorPicker value:', colorPicker.value);
   });
+
   
   // Initialize grid
   for (let i = 0; i < 90; i++) {
@@ -146,7 +155,7 @@ if (palletData) {
               let targetPixel = document.getElementById(targetPixelId);
               if (targetPixel) {
                 changeColor(targetPixel); // Assuming this function correctly changes the color of a pixel
-                submittedPixels.push({key: targetPixelId,color:color});
+                submittedPixels.push(new Pixel(targetI, targetJ, color));
               }
             }
           }
