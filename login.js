@@ -10,12 +10,12 @@ import {
 
 // Firebase configuration for your web app
 const firebaseConfig = {
-  apiKey: "<your-api-key>",
-  authDomain: "<your-auth-domain>",
-  projectId: "<your-project-id>",
-  storageBucket: "<your-storage-bucket>",
-  messagingSenderId: "<your-messaging-sender-id>",
-  appId: "<your-app-id>"
+  apiKey: "AIzaSyDgHHdYEEYzzMSSCefjQbYj9bXY4Oe5rMc",
+  authDomain: "digipenplaceproject.firebaseapp.com",
+  projectId: "digipenplaceproject",
+  storageBucket: "digipenplaceproject.appspot.com",
+  messagingSenderId: "154577461498",
+  appId: "1:154577461498:web:478816edc4d42b4e2e2943"
 };
 
 // Initialize Firebase app with the above configuration
